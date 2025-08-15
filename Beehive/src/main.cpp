@@ -1,86 +1,42 @@
 #include <TinyGPS++.h>
 #include <SoftwareSerial.h>
 
-// กำหนดพินสำหรับ GPS
-static const int RXPin = 4, TXPin = 3;
+static const int RXPin = 4, TXPin = 3; // ขาเชื่อมต่อ GPS
 static const int GPSBaud = 9600;
 
-// ออบเจกต์ TinyGPS++
 TinyGPSPlus gps;
+SoftwareSerial ss(RXPin, TXPin); // สร้าง Serial สำหรับ GPS
 
-// Serial สำหรับ GPS
-SoftwareSerial ss(RXPin, TXPin);
-
-// ตัวแปรเก็บค่าที่อ่านได้
-double latitude = 0.0;
-double longitude = 0.0;
-byte hour_gps = 0;
-byte minute_gps = 0;
-byte second_gps = 0;
-byte day_gps = 0;
-byte month_gps = 0;
-int year_gps = 0;
-
-void setup()
-{
-  Serial.begin(115200); // debug ถ้าจำเป็น
+void setup() {
+  Serial.begin(115200);
   ss.begin(GPSBaud);
-
-  // รอจนกว่าจะได้ค่าจริงจาก GPS
-  while (true)
-  {
-    while (ss.available() > 0)
-    {
-      gps.encode(ss.read());
-    }
-
-    // ตรวจสอบว่าค่าพร้อมครบทุกอย่างหรือยัง
-    if (gps.location.isValid() &&
-        gps.time.isValid() &&
-        gps.date.isValid())
-    {
-      // อัปเดตตัวแปร
-      latitude = gps.location.lat();
-      longitude = gps.location.lng();
-      hour_gps = gps.time.hour();
-      minute_gps = gps.time.minute();
-      second_gps = gps.time.second();
-      day_gps = gps.date.day();
-      month_gps = gps.date.month();
-      year_gps = gps.date.year();
-
-      break; // ออกจาก while(true) เมื่อได้ค่าครบ
-    }
-  }
 }
 
-void loop()
-{
-  // ใน loop() ก็สามารถอัปเดตค่าต่อได้ตามต้องการ
-  while (ss.available() > 0)
-  {
+void loop() {
+  // อ่านข้อมูลจาก GPS
+  while (ss.available() > 0) {
     gps.encode(ss.read());
   }
 
-  if (gps.location.isValid())
-  {
-    latitude = gps.location.lat();
-    longitude = gps.location.lng();
+  // ถ้ามีข้อมูลพิกัด
+  if (gps.location.isValid()) {
+    Serial.print("Lat: ");
+    Serial.print(gps.location.lat(), 6);
+    Serial.print(", Lng: ");
+    Serial.println(gps.location.lng(), 6);
+  } else {
+    Serial.println("Waiting for GPS signal...");
   }
 
-  if (gps.time.isValid())
-  {
-    hour_gps = gps.time.hour();
-    minute_gps = gps.time.minute();
-    second_gps = gps.time.second();
+  // ถ้ามีข้อมูลเวลา
+  if (gps.time.isValid()) {
+    Serial.print("Time (UTC): ");
+    Serial.print(gps.time.hour());
+    Serial.print(":");
+    Serial.print(gps.time.minute());
+    Serial.print(":");
+    Serial.println(gps.time.second());
   }
 
-  if (gps.date.isValid())
-  {
-    day_gps = gps.date.day();
-    month_gps = gps.date.month();
-    year_gps = gps.date.year();
-  }
-
-  // ไม่มีการ print ออกมา
+  delay(1000); // หน่วง 1 วินาที
 }
